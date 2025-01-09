@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_APPROVAL
+  AVAILABLE
+  PENDING_PAYMENT
+  SOLD
+  CANCELLED
+}
+
+model MarketplaceListing {
+  id          String           @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  sellerId    String
+  condition   ListingCondition
+  images      String[]        // Store as array in SQLite
+  tags        String[]        // Store as array in SQLite
+  status      ListingStatus   @default(PENDING_APPROVAL)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  seller      User            @relation(fields: [sellerId], references: [id])
+  offers      ListingOffer[]
+  messages    ListingMessage[]
+
+  @@index([sellerId])
+  @@index([status])
+}
+
+model ListingOffer {
+  id          String           @id @default(uuid())
+  listingId   String
+  buyerId     String
+  amount      Float
+  status      String          @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  message     String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  listing     MarketplaceListing @relation(fields: [listingId], references: [id])
+  buyer       User            @relation(fields: [buyerId], references: [id])
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+model ListingMessage {
+  id          String           @id @default(uuid())
+  listingId   String
+  senderId    String
+  content     String
+  createdAt   DateTime        @default(now())
+  listing     MarketplaceListing @relation(fields: [listingId], references: [id])
+  sender      User            @relation(fields: [senderId], references: [id])
+
+  @@index([listingId])
+  @@index([senderId])
+}
+
+// Reference to User model for type safety
+model User {
+  id            String   @id
+  name          String
+  listings      MarketplaceListing[]
+  offers        ListingOffer[]
+  messages      ListingMessage[]
+}

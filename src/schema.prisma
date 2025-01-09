@@ -1,0 +1,19 @@
+// Marketplace Plugin Schema
+// Note: This extends the core schema by adding marketplace-specific models
+
+model MarketplaceListing {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  sellerId    String
+  condition   String    // NEW, LIKE_NEW, GOOD, FAIR
+  images      String    // Store as comma-separated values
+  tags        String    // Store as comma-separated values
+  status      String    @default("AVAILABLE") // AVAILABLE, PENDING_APPROVAL, PENDING_PAYMENT, SOLD, CANCELLED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  seller      User      @relation(fields: [sellerId], references: [id])
+
+  @@index([sellerId])
+}
